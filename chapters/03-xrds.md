@@ -1,5 +1,7 @@
 # Chapter 03: XRDs — Your Platform API
 
+> **You will build:** A `WebService` XRD with schema validation, defaults, enum constraints, and status fields.
+
 A **CompositeResourceDefinition (XRD)** is how you create your own Kubernetes custom resource type. When platform teams say "we have a `MicroService` API" or "developers create a `WebService` claim in Backstage", they are describing a type that was defined in an XRD.
 
 When Crossplane processes your XRD it does two things:

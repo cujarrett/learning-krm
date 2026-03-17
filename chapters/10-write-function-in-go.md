@@ -1,5 +1,7 @@
 # Chapter 10: Write a Composition Function in Go
 
+> **You will build:** A custom gRPC Composition Function in Go — built, loaded into minikube, and tested locally.
+
 You have used `function-go-templating` and `function-patch-and-transform` — pre-built functions created by the Crossplane community. This chapter shows you how to build your own.
 
 A Composition Function is a **Go program that implements a single gRPC handler**: `RunFunction`. Crossplane calls it during each reconcile with the observed state of the XR and composed resources. Your function returns the desired state — the resources that should exist after this reconcile.

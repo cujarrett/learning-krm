@@ -1,5 +1,7 @@
 # Chapter 07: Providers & Managed Resources
 
+> **You will build:** A `BugReport` XRD backed by `provider-github` that files GitHub Issues from a `kubectl apply`.
+
 Up to now, every resource Crossplane has created has been a Kubernetes resource — Deployments, Services, ConfigMaps. This chapter introduces **Providers**, which extend Crossplane to manage **external** systems: GitHub, AWS, GCP, Helm releases, or anything with an API.
 
 The GitHub provider is the perfect first provider: no cloud credentials, no cost, and you can watch Crossplane create real GitHub issues and repositories from Kubernetes YAML.

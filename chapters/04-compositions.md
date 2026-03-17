@@ -1,5 +1,7 @@
 # Chapter 04: Compositions — Structure, Functions & Go Templating
 
+> **You will build:** A Composition that turns a `WebService` into a Deployment + Service + ConfigMap using Patch & Transform.
+
 A **Composition** is the implementation behind an XRD. It tells Crossplane: "When someone creates a `WebService`, run this pipeline and produce these Kubernetes resources."
 
 Compositions use `mode: Pipeline` — a sequence of Function steps where each step runs a plugin (a Function pod) that builds or transforms the desired resources. The primary tool you will use is **Go templating**. This chapter covers how Compositions work structurally, explains Patch & Transform briefly so you can read it in existing code, and then does the hands-on entirely in Go templates.

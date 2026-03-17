@@ -1,5 +1,7 @@
 # Chapter 08: Namespace Isolation & RBAC
 
+> **You will build:** Namespace isolation — developers can only touch their own XRs, tested with `kubectl auth can-i`.
+
 So far every `WebService` you have created has lived in the `default` namespace and your `kubectl` user has full cluster access. Real platforms need team isolation: Team A can only see and create resources in their namespace; Team B cannot touch Team A's services.
 
 This chapter covers:

@@ -1,5 +1,7 @@
 # Chapter 01: Setup & The Big Picture
 
+> **You will build:** Crossplane running on minikube; starter `App` XRD deployed and tested.
+
 ## What Is Crossplane?
 
 Crossplane is a Kubernetes extension — it runs as pods inside your cluster and lets you define your own **custom APIs** for anything you want to provision: Kubernetes resources, cloud resources, internal tooling. Those APIs look like ordinary Kubernetes objects. You write YAML, `kubectl apply` it, and a controller reconciles the desired state into reality automatically.

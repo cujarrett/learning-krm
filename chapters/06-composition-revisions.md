@@ -1,5 +1,7 @@
 # Chapter 06: Composition Revisions
 
+> **You will build:** Pin an XR to a specific Composition version and test a safe rollout.
+
 Every time you update a Composition, Crossplane creates a **CompositionRevision** — an immutable snapshot of that Composition at a point in time. This gives you a safe rollout mechanism: new XR instances pick up the latest revision automatically, but existing XRs can be pinned to an older revision until you decide to migrate them.
 
 ---

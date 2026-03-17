@@ -1,5 +1,7 @@
 # Chapter 09: Advanced Go Templating
 
+> **You will build:** A `MicroService` XRD with optional HPA using Go template conditionals and nil-safe patterns.
+
 This chapter builds a production-grade `MicroService` XRD and Composition using Go templates. You will apply conditionals, environment-driven defaults, and an optional HPA — all from a single Go template.
 
 By the end, you will have a custom resource that your imaginary company's developers would genuinely use.

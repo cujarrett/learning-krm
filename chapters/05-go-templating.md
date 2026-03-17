@@ -1,5 +1,7 @@
 # Chapter 05: Go Templating Deep Dive
 
+> **You will build:** That same Composition rewritten using Go templates (`function-go-templating`).
+
 You wrote your first Go template Composition in Chapter 04. This chapter covers the patterns you will reach for as templates grow more complex: Sprig helpers, nil-safe map access, writing status back to the XR, and reusable template blocks.
 
 ---

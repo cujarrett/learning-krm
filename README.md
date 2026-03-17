@@ -29,36 +29,20 @@ No CI/CD, no cloud. Crossplane runs as pods inside minikube and creates standard
 
 ---
 
-## What You Will Build, Chapter by Chapter
-
-| Chapter | Hands-On Output |
-|---------|----------------|
-| 01 | Crossplane running on minikube; starter `App` XRD deployed and tested |
-| 02 | Deployment + Service applied manually so the automation in later chapters feels concrete |
-| 03 | A `WebService` XRD with schema validation, defaults, enum constraints, and status fields |
-| 04 | A Composition that turns a `WebService` into Deployment + Service + ConfigMap using Patch & Transform |
-| 05 | That same Composition rewritten using Go templates (`function-go-templating`) |
-| 06 | Composition Revisions — pin an XR to a specific Composition version; test safe rollout |
-| 07 | Namespace isolation and RBAC — developers can only touch their own XRs |
-| 08 | A `MicroService` XRD with optional HPA using Go template conditionals and nil-safe patterns |
-| 09 | Write a custom Composition Function in Go — your own gRPC function, built and tested locally |
-
----
-
 ## Chapters
 
-| # | Title | Key Concepts |
-|---|-------|-------------|
-| [01](chapters/01-setup-and-big-picture.md) | Setup & The Local Workflow | minikube, Helm, Crossplane install, starter project tour |
-| [02](chapters/02-kubernetes-refresher.md) | Kubernetes Resources Refresher | GVK, CRDs, Deployments, Services, labels |
-| [03](chapters/03-xrds.md) | XRDs — Composite Resource Definitions | XRD schema, versions, defaultCompositionRef, spec vs status |
-| [04](chapters/04-compositions.md) | Compositions & Go Templating | Pipeline mode, how Functions work (gRPC protocol), P&T as a read-once reference, first Go template hands-on |
-| [05](chapters/05-go-templating.md) | Go Templating Deep Dive | Sprig helpers, nil-safe `default dict`, status writeback, `define`/`include` blocks, conditional HPA |
-| [06](chapters/06-composition-revisions.md) | Composition Revisions | CompositionRevision objects, Automatic vs Manual update policy |
-| [07](chapters/07-providers.md) | Providers & Managed Resources | Upbound provider model, `provider-github`, ProviderConfig, direct MRs, `BugReport` XRD |
-| [08](chapters/08-claims-and-rbac.md) | Namespace Isolation & RBAC | Namespaced XRs, Roles, RoleBindings, `kubectl auth can-i` |
-| [09](chapters/09-advanced-go-templating.md) | Advanced Go Templating | HPA conditionals, nil-safe patterns, loops, MicroService XRD |
-| [10](chapters/10-write-function-in-go.md) | Write a Composition Function in Go | Custom Go function, RunFunction handler, local image load |
+| Chapter | Key Concepts | Est. Time |
+|---------|--------------|-----------|
+| [01 - Setup & The Local Workflow](chapters/01-setup-and-big-picture.md) | minikube, Helm, Crossplane install, starter project tour | ~45 min |
+| [02 - Kubernetes Resources Refresher](chapters/02-kubernetes-refresher.md) | GVK, CRDs, Deployments, Services, labels | ~30 min |
+| [03 - XRDs — Composite Resource Definitions](chapters/03-xrds.md) | XRD schema, versions, defaultCompositionRef, spec vs status | ~45 min |
+| [04 - Compositions & Go Templating](chapters/04-compositions.md) | Pipeline mode, how Functions work (gRPC protocol), P&T as a read-once reference, first Go template hands-on | ~45 min |
+| [05 - Go Templating Deep Dive](chapters/05-go-templating.md) | Sprig helpers, nil-safe `default dict`, status writeback, `define`/`include` blocks, conditional HPA | ~60 min |
+| [06 - Composition Revisions](chapters/06-composition-revisions.md) | CompositionRevision objects, Automatic vs Manual update policy | ~30 min |
+| [07 - Providers & Managed Resources](chapters/07-providers.md) | Upbound provider model, `provider-github`, ProviderConfig, direct MRs, `BugReport` XRD | ~45 min |
+| [08 - Namespace Isolation & RBAC](chapters/08-claims-and-rbac.md) | Namespaced XRs, Roles, RoleBindings, `kubectl auth can-i` | ~30 min |
+| [09 - Advanced Go Templating](chapters/09-advanced-go-templating.md) | HPA conditionals, nil-safe patterns, loops, MicroService XRD | ~60 min |
+| [10 - Write a Composition Function in Go](chapters/10-write-function-in-go.md) | Custom Go function, RunFunction handler, local image load | ~90 min |
 
 ---
 

@@ -1,5 +1,7 @@
 # Chapter 02: Kubernetes Resources Refresher
 
+> **You will build:** A Deployment + Service applied manually so the automation in later chapters feels concrete.
+
 Crossplane creates and manages Kubernetes resources on your behalf. Before building custom resource APIs, you need a solid mental model of *what* Crossplane is creating under the hood and *how* those resources work together.
 
 This chapter covers the Kubernetes building blocks you will see throughout this guide, then lets you deploy them manually so the automation in later chapters feels concrete, not magic.
