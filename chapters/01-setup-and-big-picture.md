@@ -179,17 +179,17 @@ crossplane-rbac-manager-5b8f9c6d7-r9abc    1/1     Running   0          60s
 
 ### Step 4: Apply the Starter Project Files
 
-Apply the files from this repo's root **in order**. Order matters because the Composition references the Function by name (the Function must exist first), and the XRD must exist before Crossplane can match an XR to a Composition.
+Apply the files from `practice/ch01/` **in order**. Order matters because the Composition references the Function by name (the Function must exist first), and the XRD must exist before Crossplane can match an XR to a Composition.
 
 ```bash
 # 1. Install the Function plugin (Crossplane will download the OCI image)
-kubectl apply -f function.yaml
+kubectl apply -f practice/ch01/function.yaml
 
 # 2. Register the App custom resource type
-kubectl apply -f xrd.yaml
+kubectl apply -f practice/ch01/xrd.yaml
 
 # 3. Define what an App creates
-kubectl apply -f composition.yaml
+kubectl apply -f practice/ch01/composition.yaml
 ```
 
 ### Step 5: Wait for the Function to Be Healthy
@@ -212,7 +212,7 @@ Press `Ctrl+C` to stop watching.
 ### Step 6: Create Your First App
 
 ```bash
-kubectl apply -f app.yaml
+kubectl apply -f practice/ch01/app.yaml
 ```
 
 Watch Crossplane provision the resources:
@@ -257,7 +257,7 @@ kubectl get deployments,services
 One of Crossplane's most powerful behaviors: deleting the XR deletes everything it created.
 
 ```bash
-kubectl delete -f app.yaml
+kubectl delete -f practice/ch01/app.yaml
 
 # Watch the Deployment disappear
 kubectl get deployments --watch
