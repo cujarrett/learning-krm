@@ -466,6 +466,17 @@ kubectl logs <pod-name> -n crossplane-system
 - Confirmed cascade delete: removing the XR removes all composed resources
 - Read and understood P&T syntax — you can now read any Composition that uses it
 
+### Clean Up
+
+Remove everything applied in this chapter:
+
+```bash
+kubectl delete webservice my-webservice bare-webservice -n default --ignore-not-found
+kubectl delete -f practice/ch04/webservice-composition.yaml --ignore-not-found
+```
+
+Leave the XRD and function installed — Chapter 05 builds on them.
+
 Chapter 05 goes deeper: Sprig helpers, nil-safe map patterns, writing status back to the XR, and template `define`/`include` blocks for reuse.
 
 ---

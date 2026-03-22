@@ -631,9 +631,16 @@ kubectl get hpa svc-staging -n default
 ### Step 6: Clean Up
 
 ```bash
-kubectl delete webservice svc-production svc-staging -n default
-kubectl delete clusterrolebinding crossplane-hpa-manager
-kubectl delete clusterrole crossplane-hpa-manager
+# XRs (deletes all composed resources via cascade)
+kubectl delete webservice svc-production svc-staging -n default --ignore-not-found
+
+# HPA RBAC grant added in the prerequisite step
+kubectl delete clusterrolebinding crossplane-hpa-manager --ignore-not-found
+kubectl delete clusterrole crossplane-hpa-manager --ignore-not-found
+
+# Composition and XRD from this chapter
+kubectl delete composition webservice-advanced-composition --ignore-not-found
+kubectl delete -f practice/ch05/webservice-xrd.yaml --ignore-not-found
 ```
 
 ---

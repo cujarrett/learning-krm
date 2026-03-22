@@ -306,8 +306,12 @@ kubectl get deployment pinned-svc -n default -o jsonpath='{.metadata.labels}'
 ### Step 10: Clean Up
 
 ```bash
-kubectl delete -f practice/ch06/pinned-webservice.yaml
-kubectl delete -f practice/ch06/auto-webservice.yaml
+# XRs (deletes all composed resources via cascade)
+kubectl delete -f practice/ch06/pinned-webservice.yaml --ignore-not-found
+kubectl delete -f practice/ch06/auto-webservice.yaml --ignore-not-found
+
+# Composition applied in this chapter (also deletes its revisions)
+kubectl delete composition webservice-composition --ignore-not-found
 ```
 
 ---
