@@ -52,7 +52,7 @@ No CI/CD, no cloud. Crossplane runs as pods inside minikube and creates standard
 
 - **macOS** with [Homebrew](https://brew.sh) installed
 - **Docker Desktop** running (minikube uses it as the driver)
-- **Go familiarity** — your `~/Developer/learning-go/101` work is directly applicable to Chapter 04 onwards
+- **Go familiarity**
 - Basic `kubectl` knowledge (`get`, `apply`, `describe`, `logs`)
 
 ---
