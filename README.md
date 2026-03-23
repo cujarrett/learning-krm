@@ -57,19 +57,6 @@ No CI/CD, no cloud. Crossplane runs as pods inside minikube and creates standard
 
 ---
 
-## The Starter Project
-
-The YAML files in the root of this repo are a minimal working example you deploy in Chapter 01:
-
-| File | What It Does |
-|------|-------------|
-| `xrd.yaml` | Defines the `App` custom resource API with a `spec.image` field |
-| `composition.yaml` | When an `App` is created, create a Deployment + Service |
-| `function.yaml` | Installs the `function-patch-and-transform` Crossplane plugin |
-| `app.yaml` | An instance of `App` — this is the CR a developer writes and commits to Git. Argo (or any GitOps tool) applies it; Crossplane reconciles it into a Deployment + Service |
-
----
-
 ## How To Use This Guide
 
 Each chapter follows a consistent pattern:
