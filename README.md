@@ -41,7 +41,7 @@ No CI/CD, no cloud. Crossplane runs as pods inside minikube and creates standard
 | [04 - Compositions & Go Templating](chapters/04-compositions.md) | Pipeline mode, how Functions work (gRPC protocol), P&T as a read-once reference, first Go template hands-on | ~45 min |
 | [05 - Go Templating Deep Dive](chapters/05-go-templating.md) | Sprig helpers, nil-safe `default dict`, status writeback, `define`/`include` blocks, conditional HPA | ~60 min |
 | [06 - Composition Revisions](chapters/06-composition-revisions.md) | CompositionRevision objects, Automatic vs Manual update policy | ~30 min |
-| [07 - Providers & Managed Resources](chapters/07-providers.md) | Upbound provider model, `provider-github`, ProviderConfig, direct MRs, `BugReport` XRD | ~45 min |
+| [07 - Providers & Managed Resources](chapters/07-providers.md) | Upbound provider model, `provider-github`, ProviderConfig, direct MRs (`Branch` + `RepositoryFile`), `FeatureBranch` XRD pattern | ~45 min |
 | [08 - Namespace Isolation & RBAC](chapters/08-claims-and-rbac.md) | Namespaced XRs, Roles, RoleBindings, `kubectl auth can-i` | ~30 min |
 | [09 - Advanced Go Templating](chapters/09-advanced-go-templating.md) | HPA conditionals, nil-safe patterns, loops, MicroService XRD | ~60 min |
 | [10 - Write a Composition Function in Go](chapters/10-write-function-in-go.md) | Custom Go function, RunFunction handler, local image load | ~90 min |
