@@ -1,7 +1,5 @@
 # Learning Crossplane
 
-> **This guide targets Crossplane v2.** If you have used Crossplane before, note that v2 removes the Claim/XR split that existed in v1 — there is no longer a separate cluster-scoped XR object created behind the scenes. A namespaced XR (what you apply to the cluster) is the only object. You do not need to think about Claims as a distinct concept.
-
 A hands-on learning path for building Crossplane custom APIs from scratch — using **minikube on macOS**, **no cloud provider required**, and **Go templating** to generate Kubernetes resources.
 
 All work is local: write YAML and Go templates, apply them to minikube, test, iterate.
@@ -76,6 +74,8 @@ practice/
 ```
 
 Work through chapters in order — each one builds on the previous.
+
+> **This guide targets Crossplane v2.** If you have used Crossplane before, note that v2 removes the Claim/XR split that existed in v1 — there is no longer a separate cluster-scoped XR object created behind the scenes. A namespaced XR (what you apply to the cluster) is the only object. You do not need to think about Claims as a distinct concept.
 
 ---
 
