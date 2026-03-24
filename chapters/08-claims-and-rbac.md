@@ -82,15 +82,15 @@ These roles let Crossplane's own service accounts reconcile XRs across namespace
 You will create two team namespaces (`team-alpha` and `team-beta`) with RBAC, then deploy `WebService` resources as each team and verify isolation.
 
 ```bash
-mkdir -p practice/ch06
+mkdir -p practice/ch08
 ```
 
 ### Step 1: Ensure the XRD and Composition Are Applied
 
 ```bash
-kubectl apply -f practice/ch03/webservice-xrd.yaml
-kubectl apply -f practice/ch05/function-go-templating.yaml
-kubectl apply -f practice/ch05/webservice-go-composition.yaml
+kubectl apply -f practice/ch05/webservice-xrd.yaml
+kubectl apply -f practice/ch04/function-go-templating.yaml
+kubectl apply -f practice/ch06/webservice-composition.yaml
 
 kubectl get xrds
 kubectl get functions.pkg.crossplane.io
@@ -99,7 +99,7 @@ kubectl get functions.pkg.crossplane.io
 
 ### Step 2: Create Team Namespaces
 
-Create `practice/ch06/namespaces.yaml`:
+Create `practice/ch08/namespaces.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -122,13 +122,13 @@ metadata:
 Apply:
 
 ```bash
-kubectl apply -f practice/ch06/namespaces.yaml
+kubectl apply -f practice/ch08/namespaces.yaml
 kubectl get namespaces | grep team-
 ```
 
 ### Step 3: Create Roles for Each Team
 
-Create `practice/ch06/rbac.yaml`:
+Create `practice/ch08/rbac.yaml`:
 
 ```yaml
 # ── Role (namespace-scoped) for team-alpha ────────────────────────────────────
@@ -212,14 +212,14 @@ metadata:
 Apply:
 
 ```bash
-kubectl apply -f practice/ch06/rbac.yaml
+kubectl apply -f practice/ch08/rbac.yaml
 kubectl get roles,rolebindings,serviceaccounts -n team-alpha
 kubectl get roles,rolebindings,serviceaccounts -n team-beta
 ```
 
 ### Step 4: Deploy a WebService as Team Alpha
 
-Create `practice/ch06/team-alpha-service.yaml`:
+Create `practice/ch08/team-alpha-service.yaml`:
 
 ```yaml
 apiVersion: platform.example.io/v1alpha1
@@ -240,19 +240,18 @@ spec:
 Apply:
 
 ```bash
-kubectl apply -f practice/ch06/team-alpha-service.yaml
+kubectl apply -f practice/ch08/team-alpha-service.yaml
 ```
 
-Watch the resources:
+See the resources:
 
 ```bash
-kubectl get deployments,services,configmaps -n team-alpha --watch
-# Ctrl+C when Deployment shows 1/1 READY
+kubectl get deployments,services,configmaps -n team-alpha
 ```
 
 ### Step 5: Deploy a WebService as Team Beta
 
-Create `practice/ch06/team-beta-service.yaml`:
+Create `practice/ch08/team-beta-service.yaml`:
 
 ```yaml
 apiVersion: platform.example.io/v1alpha1
@@ -273,9 +272,8 @@ spec:
 Apply:
 
 ```bash
-kubectl apply -f practice/ch06/team-beta-service.yaml
-kubectl get deployments,services -n team-beta --watch
-# Ctrl+C when ready
+kubectl apply -f practice/ch08/team-beta-service.yaml
+kubectl get deployments,services -n team-beta
 ```
 
 ### Step 6: Verify Namespace Isolation
@@ -328,11 +326,11 @@ This is the key platform engineering constraint: developers use the `WebService`
 ### Step 7: Clean Up
 
 ```bash
-kubectl delete -f practice/ch06/team-alpha-service.yaml
-kubectl delete -f practice/ch06/team-beta-service.yaml
+kubectl delete -f practice/ch08/team-alpha-service.yaml
+kubectl delete -f practice/ch08/team-beta-service.yaml
 ```
 
-Leave the namespaces and RBAC in place — Chapter 08 will reuse them.
+Leave the namespaces and RBAC in place — Chapter 09 will reuse them.
 
 ---
 
