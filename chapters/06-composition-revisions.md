@@ -92,6 +92,243 @@ This pattern lets you run `channel: stable` and `channel: canary` Compositions s
 
 ---
 
+## Versioning XRDs, Compositions, and XRs
+
+Every time you `kubectl apply` a Composition — even a one-character whitespace change — Crossplane creates a new immutable **CompositionRevision** snapshot. This is automatic and always happens. The `compositionUpdatePolicy` on each XR then controls what happens next:
+
+- **`Automatic`** (default): the XR picks up the new revision on its next reconcile loop with no action from you. This is fine for most routine Composition edits — tweaking templates, adjusting labels, changing defaults.
+- **`Manual`**: the XR stays pinned to its current revision until you explicitly update `compositionRevisionRef`. Use this when a Composition change is significant enough that you want to migrate XRs deliberately, one at a time.
+
+CompositionRevisions cover everything within a single Composition object. But when the *XRD schema itself* needs a breaking change — renaming a field, removing one, or adding a required field — Revisions aren't enough. That requires introducing a new XRD version, which is a different mechanism described below.
+
+### The Versioning Scheme
+
+Kubernetes and Crossplane use **stability-stage versioning** rather than semver. The version string encodes how mature and stable the API is:
+
+| Version | Stability | Meaning |
+|---------|-----------|---------|
+| `v1alpha1`, `v1alpha2` | Alpha | Experimental — may change or be removed without notice |
+| `v1beta1`, `v1beta2` | Beta | Mostly stable — breaking changes unlikely but possible |
+| `v1`, `v2` | GA (stable) | Stable — breaking changes require a new major version |
+
+The number suffix (`alpha1` → `alpha2`) increments when the schema changes within the same stage. When the API is mature enough to graduate, the stage name changes (`v1alpha2` → `v1beta1`).
+
+A typical lifecycle looks like:
+
+```
+v1alpha1 → v1alpha2 → v1beta1 → v1beta2 → v1
+                                            ↓ breaking change later
+                                           v2alpha1 → ...
+```
+
+Unlike semver, multiple versions can coexist in the same XRD simultaneously (via `spec.versions`), letting teams on the old version and teams on the new version run side by side during a migration — no hard cutover required.
+
+---
+
+### How the Pieces Connect
+
+Before looking at when and how to version, it helps to understand how XRDs, Compositions, and XRs relate to each other.
+
+**XRD → XR (the schema bridge)**
+
+The XRD is the schema definition — it registers a new custom resource Kind (`WebService`) with the Kubernetes API server and declares what fields it accepts. An XR is simply an *instance* of that Kind. The XRD version (`v1alpha1`, `v1beta1`) is what appears in the XR's `apiVersion` field:
+
+```
+XRD defines:  platform.example.io/v1alpha1  Kind: WebService
+                          ↓
+XR uses:      apiVersion: platform.example.io/v1alpha1
+              kind: WebService
+              spec:
+                image: nginx:alpine    ← fields validated against the XRD schema
+                replicas: 2
+```
+
+When you add a new version to the XRD, you're telling the API server: "this Kind now also exists at `v1beta1` with this different schema." Existing XRs at `v1alpha1` are unaffected until you explicitly update their `apiVersion`.
+
+**XRD → Composition (the reconciliation bridge)**
+
+A Composition is the implementation of an XRD version. It declares which XRD version it handles via `compositeTypeRef`, defined in the **Composition** file:
+
+```yaml
+# webservice-composition.yaml
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: webservice-composition
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.io/v1alpha1   # ← must match an XRD version
+    kind: WebService
+```
+
+This is the binding between the two: when Crossplane reconciles an XR at `v1alpha1`, it looks for a Composition whose `compositeTypeRef` matches `platform.example.io/v1alpha1 / WebService`. The Composition is *not* versioned by its name — it is versioned by which XRD version its `compositeTypeRef` points to.
+
+```
+┌─────────────────────────────────────────────────────┐
+│ XRD                                                 │
+│   group: platform.example.io                        │
+│   names.kind: WebService                            │
+│   spec.versions:                                    │
+│     - name: v1alpha1                                │
+└─────────────────────────────────────────────────────┘
+                         ▲
+          Composition targets this XRD by matching
+          both group+version and kind (see below)
+                         │
+┌─────────────────────────────────────────────────────┐
+│ Composition                                         │
+│   metadata.name: webservice-composition             │
+│                                                     │
+│   spec.compositeTypeRef:                            │
+│     apiVersion: platform.example.io/v1alpha1        │
+│     kind: WebService                                │
+└─────────────────────────────────────────────────────┘
+                         │
+                         │ reconciles
+                         ▼
+┌─────────────────────────────────────────────────────┐
+│ XR                                                  │
+│   apiVersion: platform.example.io/v1alpha1     ─────│──► matches compositeTypeRef.apiVersion
+│   kind: WebService                             ─────│──► matches compositeTypeRef.kind
+│   spec:                                             │
+│     crossplane:                                     │
+│       compositionRef:                               │
+│         name: webservice-composition           ─────│──► matches Compositions metadata.name
+└─────────────────────────────────────────────────────┘
+```
+
+When you introduce `v1beta1` in the XRD, you need a separate Composition with `compositeTypeRef.apiVersion: platform.example.io/v1beta1` to handle those XRs:
+
+```
+┌──────────────────────────────────┐   ┌──────────────────────────────────┐
+│ XRD                              │   │ XRD                              │
+│   spec.versions:                 │   │   spec.versions:                 │
+│     - name: v1alpha1             │   │     - name: v1alpha1             │
+│     - name: v1beta1              │   │     - name: v1beta1              │
+└──────────────────────────────────┘   └──────────────────────────────────┘
+               ▲                                      ▲
+    platform.example.io/v1alpha1           platform.example.io/v1beta1
+               │                                      │
+┌──────────────────────────────────┐   ┌──────────────────────────────────┐
+│ Composition  webservice-v1       │   │ Composition  webservice-v2       │
+│   compositeTypeRef:              │   │   compositeTypeRef:              │
+│     apiVersion: .../v1alpha1     │   │     apiVersion: .../v1beta1      │
+└──────────────────────────────────┘   └──────────────────────────────────┘
+               │                                      │
+               │ reconciles                           │ reconciles
+               ▼                                      ▼
+┌──────────────────────────────────┐   ┌──────────────────────────────────┐
+│ XR  apiVersion: .../v1alpha1     │   │ XR  apiVersion: .../v1beta1      │
+└──────────────────────────────────┘   └──────────────────────────────────┘
+```
+
+**Summary:** The XRD version is the shared contract — it appears in both the XR (`apiVersion`) and the Composition (`compositeTypeRef`).
+
+---
+
+### When to Version
+
+| Change Type | Situation | Action |
+|-------------|-----------|--------|
+| XRD schema | Adding an optional field with a safe default | No version bump needed — existing XRs continue to work |
+| XRD schema | Renaming a field or changing its type | **New XRD version** — the old field is a breaking change |
+| XRD schema | Removing a field consumers depend on | **New XRD version** with a deprecation period |
+| Composition | Changing Composition logic without touching the XRD schema | No version bump needed — let Composition Revisions handle it |
+| Composition | Major implementation restructure (e.g. swapping cloud resources) | Create a new file (e.g. `webservice-composition-v2.yaml`) with a new `metadata.name` but the **same** `compositeTypeRef`, apply it to the cluster, then update each XR's `compositionRef` to point to the new name |
+
+**Rule of thumb:** version the XRD when the *schema* (the fields users write in their YAML) changes in a breaking way. Create a new named Composition when the *implementation* changes significantly but the schema stays the same.
+
+---
+
+### XRD Version Flags
+
+Each version entry in `spec.versions` has two important flags:
+
+| Flag | Meaning |
+|------|---------|
+| `served: true` | The Kubernetes API server accepts and returns XR objects at this version. Set to `false` to stop accepting new objects at that version. |
+| `referenceable: true` | Crossplane uses this version as the target for Composition reconciliation — it is the version a Composition's `compositeTypeRef` must point to for active reconciling. **Exactly one version may be `referenceable: true`** at a time. Setting `referenceable: false` on a new version means you can apply it to the cluster safely; Crossplane will not try to reconcile XRs against it until you flip this to `true`. |
+
+---
+
+### Breaking Change Migration Workflows
+
+#### Scenario A: Breaking XRD schema change (field renamed, removed, or required)
+
+_Example: renaming `image` to `containerImage`, or adding a new required field `owner`._
+
+This scenario involves changing the XRD schema, so a new XRD version is required. CompositionRevisions alone cannot help here — they snapshot the Composition implementation, not the schema contract.
+
+```
+1. Add v1beta1 to the XRD with your new schema (served=true, referenceable=false)
+   → kubectl apply -f xrd.yaml
+   ↳ Safe: v1beta1 is known to the API server but Crossplane won't reconcile
+     against it yet. All existing v1alpha1 XRs keep reconciling normally.
+
+2. Create a new Composition file (e.g. webservice-composition-v2.yaml) with a
+   new metadata.name and compositeTypeRef pointing to v1beta1
+   → kubectl apply -f webservice-composition-v2.yaml
+   ↳ No XRs use it yet. Crossplane creates a CompositionRevision for it automatically.
+   ↳ The new metadata.name is what separates it from the old Composition — both
+     exist in the cluster simultaneously until you finish migrating.
+
+3. Test: create one new XR with apiVersion: v1beta1, pointing to the new Composition
+   → kubectl apply -f test-xr-v1beta1.yaml
+   ↳ Verify it reconciles correctly before touching any existing XRs.
+
+4. Flip referenceable: true on v1beta1 and false on v1alpha1 in the XRD
+   → kubectl apply -f xrd.yaml
+   ↳ Crossplane now routes reconciliation through v1beta1. The Composition from
+     step 2 must already exist — otherwise XRs will sit unreconciled.
+
+5. Migrate existing XRs one by one: update their apiVersion to v1beta1 and add
+   any new required fields, then kubectl apply each one.
+   ↳ Policy note: compositionUpdatePolicy does not help here. It controls which
+     CompositionRevision an XR uses, not which XRD version. You must manually
+     update the apiVersion field in each XR manifest.
+
+6. Once all XRs are on v1beta1, set v1alpha1 served=false → apply XRD.
+   ↳ Rejects any new objects at v1alpha1. Existing migrated XRs are unaffected.
+
+7. After a deprecation period, remove v1alpha1 from spec.versions → apply XRD.
+```
+
+#### Scenario B: Breaking Composition change (no XRD schema change)
+
+_Example: replacing a Deployment with a StatefulSet, or restructuring the resource pipeline so significantly that you can't safely roll it out to all XRs at once._
+
+Because the XRD schema isn't changing, **no new XRD version is needed**. You create a new named Composition targeting the same XRD version, then migrate XRs to it one by one.
+
+This is where `compositionUpdatePolicy` matters most:
+- XRs with **`Automatic`** policy will immediately pick up any new revision of their current Composition on the next reconcile — so if you edit the existing Composition in place, all Automatic XRs will get the change at once. If that's too risky, create a new named Composition instead (this scenario).
+- XRs with **`Manual`** policy stay pinned to their current `compositionRevisionRef` regardless of what you change in the Composition. You migrate them explicitly by updating `compositionRef` or `compositionRevisionRef`.
+
+```
+1. Create a new Composition (e.g. webservice-composition-v2) targeting the
+   existing XRD version (compositeTypeRef: v1alpha1)
+   → kubectl apply -f webservice-composition-v2.yaml
+   ↳ No XRs use it yet. Crossplane creates a CompositionRevision for it automatically.
+
+2. Test: create one new XR pointing to it explicitly
+   spec:
+     crossplane:
+       compositionRef:
+         name: webservice-composition-v2
+   → kubectl apply -f test-xr.yaml
+
+3. Migrate existing XRs one by one by patching their compositionRef:
+   kubectl patch webservice <name> -n <ns> --type merge \
+     -p '{"spec":{"crossplane":{"compositionRef":{"name":"webservice-composition-v2"}}}}'
+   ↳ Once patched, Automatic XRs will start reconciling against the new Composition
+     immediately. Manual XRs will also switch Compositions but stay on their pinned
+     revision of the new one until you update compositionRevisionRef.
+
+4. Once all XRs are migrated, delete the old Composition.
+   kubectl delete composition webservice-composition
+```
+
+---
+
 ## Hands-On: Create and Inspect Revisions
 
 ```bash
