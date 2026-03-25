@@ -26,7 +26,7 @@ spec:
     kind: App                                       # PascalCase Kind developers write in their YAML
     plural: apps                                    # Lowercase plural used in API URL paths
   versions:
-  - name: v1                                        # The version string — semver-style
+  - name: v1                                        # The version string — stability-stage versioning rather than semver
     served: true                                    # The API server accepts this version
     referenceable: true                             # Compositions can reference this version
     schema:
