@@ -6,8 +6,6 @@ You have used `function-go-templating` and `function-patch-and-transform` — pr
 
 A Composition Function is a **Go program that implements a single gRPC handler**: `RunFunction`. Crossplane calls it during each reconcile with the observed state of the XR and composed resources. Your function returns the desired state — the resources that should exist after this reconcile.
 
-This is where your Go knowledge from `~/Developer/learning-go/101` becomes directly applicable.
-
 ---
 
 ## How a Function Fits In
@@ -23,7 +21,7 @@ Crossplane Controller
         │  }
         ▼
   Your Go Function Pod
-  func (f *Function) RunFunction(ctx, req) (*RunFunctionResponse, error) {
+  func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
         │
         │  1. Read the XR: req.Observed.Composite.Resource
         │  2. Build the resources you want to exist
@@ -79,7 +77,7 @@ You write the `RunFunction` handler. The SDK handles the gRPC server startup, he
 Install the Crossplane CLI (needed for `crossplane xpkg build`):
 
 ```bash
-brew install crossplane/tap/crossplane
+brew install crossplane
 crossplane version
 ```
 
@@ -96,14 +94,14 @@ go version
 You will write a function that reads three fields from an XR — `spec.appName`, `spec.environment`, `spec.owner` — and creates a ConfigMap containing those values plus a computed field. The goal is to learn the function structure, not complex business logic.
 
 ```bash
-mkdir -p practice/ch09
+mkdir -p practice/ch10
 ```
 
 ### Step 1: Scaffold the Function
 
 ```bash
-cd practice/ch09
-crossplane beta xpkg init runtime function-template-go \
+cd practice/ch10
+crossplane xpkg init runtime function-template-go \
   --directory function-app-config
 cd function-app-config
 ```
@@ -123,7 +121,7 @@ function-app-config/
 
 ### Step 2: Define the XRD
 
-From the `practice/ch09/` folder (not inside function-app-config), create `practice/ch09/appconfig-xrd.yaml`:
+From the `practice/ch10/` folder (not inside function-app-config), create `practice/ch10/appconfig-xrd.yaml`:
 
 ```yaml
 apiVersion: apiextensions.crossplane.io/v2
@@ -167,7 +165,7 @@ spec:
 
 ### Step 3: Write the Function Handler
 
-Replace the contents of `practice/ch09/function-app-config/fn.go` with:
+Replace the contents of `practice/ch10/function-app-config/fn.go` with:
 
 ```go
 package main
@@ -181,10 +179,10 @@ import (
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
+	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/response"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -259,11 +257,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		return nil, errors.Wrap(err, "cannot convert ConfigMap to unstructured")
 	}
 
+	cd := composed.New()
+	cd.Object = cmObj
+
 	desired := map[resource.Name]*resource.DesiredComposed{
 		"app-configmap": {
-			Resource: &resource.Composed{
-				Unstructured: unstructured.Unstructured{Object: cmObj},
-			},
+			Resource: cd,
 		},
 	}
 
@@ -279,12 +278,10 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 Pull dependencies:
 
 ```bash
-cd practice/ch09/function-app-config
+cd practice/ch10/function-app-config
 go mod tidy
 go build ./...
 ```
-
-Fix any compile errors before continuing. Common issue: missing `k8s.io/api` or `k8s.io/apimachinery` — `go mod tidy` resolves these automatically.
 
 ### Step 4: Run the Unit Tests
 
@@ -330,30 +327,40 @@ go test ./... -v
 
 The test runs entirely in-process — no cluster, no Docker. This is one of the biggest advantages of the Go function model: fast, reliable unit tests.
 
-### Step 5: Build the OCI Image
+### Step 5: Build the OCI Images
+
+Build the runtime Docker image (your Go binary):
 
 ```bash
-# From inside practice/ch09/function-app-config/
+# From inside practice/ch10/function-app-config/
+docker build -t runtime .
+```
+
+Build the Crossplane package. It embeds the runtime plus the `crossplane.yaml` metadata that Crossplane's package manager requires:
+
+```bash
 crossplane xpkg build \
   --package-root=package \
   --embed-runtime-image=runtime \
-  --output=../function-app-config.xpkg
+  -o function-app-config.xpkg
 ```
 
-This produces `practice/ch09/function-app-config.xpkg`.
+### Step 6: Push to a Registry
 
-### Step 6: Load Into Minikube
+Crossplane's package manager requires a fully qualified image name (`registry/repo:tag`) — bare names like `function-app-config:latest` are rejected at validation. For local learning, use [ttl.sh](https://ttl.sh) — a free anonymous registry where images auto-expire after 1 hour. No account needed.
+
+Load the `.xpkg` into Docker and push it:
 
 ```bash
-minikube image load practice/ch09/function-app-config.xpkg --profile crossplane
-
-# Confirm the image is available inside minikube
-minikube ssh --profile crossplane -- crictl images | grep function-app-config
+# Load the xpkg tarball into Docker
+IMAGE_ID=$(docker load -i function-app-config.xpkg | grep -oE 'sha256:[a-f0-9]+')
+docker tag "$IMAGE_ID" ttl.sh/function-app-config:1h
+docker push ttl.sh/function-app-config:1h
 ```
 
 ### Step 7: Install the Function
 
-Create `practice/ch09/function-install.yaml`:
+Create `practice/ch10/function-install.yaml`:
 
 ```yaml
 apiVersion: pkg.crossplane.io/v1
@@ -361,14 +368,18 @@ kind: Function
 metadata:
   name: function-app-config
 spec:
-  package: function-app-config:latest
+  package: ttl.sh/function-app-config:1h
   packagePullPolicy: IfNotPresent
 ```
+
+> In a real workflow you would push to your own registry (ECR, GCR, Docker Hub, etc.) and use that URL instead of `ttl.sh`.
 
 Apply and wait:
 
 ```bash
-kubectl apply -f practice/ch09/function-install.yaml
+# cd back to the repo root — Steps 8 onwards use repo-root-relative paths
+cd "$(git rev-parse --show-toplevel)"
+kubectl apply -f practice/ch10/function-install.yaml
 kubectl get functions.pkg.crossplane.io --watch
 # Wait for function-app-config HEALTHY=True, then Ctrl+C
 ```
@@ -383,7 +394,7 @@ kubectl logs <pod-name> -n crossplane-system
 
 ### Step 8: Write the Composition
 
-Create `practice/ch09/appconfig-composition.yaml`:
+Create `practice/ch10/appconfig-composition.yaml`:
 
 ```yaml
 apiVersion: apiextensions.crossplane.io/v1
@@ -404,15 +415,15 @@ spec:
 Apply both:
 
 ```bash
-kubectl apply -f practice/ch09/appconfig-xrd.yaml
-kubectl apply -f practice/ch09/appconfig-composition.yaml
+kubectl apply -f practice/ch10/appconfig-xrd.yaml
+kubectl apply -f practice/ch10/appconfig-composition.yaml
 kubectl get xrds --watch
 # Wait for appconfigs.platform.example.io ESTABLISHED, then Ctrl+C
 ```
 
 ### Step 9: Test End to End
 
-Create `practice/ch09/test-appconfig.yaml`:
+Create `practice/ch10/test-appconfig.yaml`:
 
 ```yaml
 apiVersion: platform.example.io/v1alpha1
@@ -429,8 +440,8 @@ spec:
 Apply and watch:
 
 ```bash
-kubectl apply -f practice/ch09/test-appconfig.yaml
-kubectl get appconfigs,configmaps -n default --watch
+kubectl apply -f practice/ch10/test-appconfig.yaml
+kubectl get appconfigs,configmaps -n default
 # Ctrl+C when payments-config appears
 ```
 
@@ -452,7 +463,11 @@ data:
 
 `APP_FULL_NAME` was computed in your Go code — this is logic that no YAML patch syntax can express.
 
-### Step 10: Iterate — Add a New Field Without Restarting the Cluster
+### Step 10: Iterate — Validate With `crossplane render` (No Cluster Required)
+
+The push-to-registry + pod-restart cycle is the slow path. The fast path — and the one used by Crossplane teams in real projects — is `crossplane render`. It runs your entire composition pipeline locally: no cluster, no Docker push, no pod restart. You see the output in under a second.
+
+This skill is essential when working with AWS resources: you want to validate that your function produces the right S3 bucket or IAM role YAML *before* it touches real infrastructure.
 
 Open `fn.go` and add one more key to the `Data` map:
 
@@ -476,31 +491,49 @@ func replicaHint(env string) int {
 }
 ```
 
-Rebuild and reload:
+Build a local Docker image (no xpkg, no push):
 
 ```bash
+cd practice/ch10/function-app-config
 go build ./...
-crossplane xpkg build \
-  --package-root=package \
-  --embed-runtime-image=runtime \
-  --output=../function-app-config.xpkg
-
-minikube image load practice/ch09/function-app-config.xpkg --profile crossplane
-
-# Restart the function pod to pick up the new image
-kubectl rollout restart deployment \
-  -n crossplane-system \
-  -l pkg.crossplane.io/revision=function-app-config
+docker build --no-cache -t function-app-config:local .
 ```
 
-Delete and re-create the XR to trigger a fresh reconcile:
+Create `practice/ch10/function-render.yaml` — a functions list that points `crossplane render` at the local image:
+
+```yaml
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-app-config
+spec:
+  package: function-app-config:local
+```
+
+Run the pipeline locally:
 
 ```bash
-kubectl delete -f practice/ch09/test-appconfig.yaml
-kubectl apply  -f practice/ch09/test-appconfig.yaml
-kubectl get configmap payments-config -n default -o yaml
-# data should now include REPLICA_HINT: "3"
+cd "$(git rev-parse --show-toplevel)"
+crossplane render \
+  practice/ch10/test-appconfig.yaml \
+  practice/ch10/appconfig-composition.yaml \
+  practice/ch10/function-render.yaml
 ```
+
+`crossplane render` starts your function image as a local Docker container, calls `RunFunction` with the XR, and prints the desired resources — exactly what Crossplane would create in the cluster. No cluster connection needed.
+
+Expected output includes a ConfigMap with:
+
+```yaml
+data:
+  APP_FULL_NAME: payments-service-production
+  APP_NAME: payments-service
+  ENVIRONMENT: production
+  OWNER: team-alpha
+  REPLICA_HINT: "3"
+```
+
+The iteration loop from here is: edit `fn.go` → `docker build -t function-app-config:local .` → `crossplane render ...` → see output. That's it. No cluster needed.
 
 ---
 
@@ -510,8 +543,9 @@ kubectl get configmap payments-config -n default -o yaml
 - XR field access using `GetString` on the observed composite resource
 - Kubernetes object construction in Go, converted to unstructured and added to the desired state
 - Unit tests that run entirely without a cluster
-- OCI image packaging with `crossplane xpkg build` and local loading with `minikube image load`
+- OCI image packaging with `crossplane xpkg build` and push to a registry
 - End-to-end test from XR apply through Crossplane pipeline to created ConfigMap
+- Local iteration with `crossplane render` — no cluster, no push, instant feedback
 
 ---
 
@@ -519,12 +553,13 @@ kubectl get configmap payments-config -n default -o yaml
 
 | Topic | What to Explore |
 |-------|----------------|
+| **`crossplane render` deeply** | Add `--include-full-xr` to see status written back; pipe output to `kubectl diff` to compare against cluster state |
 | **Read observed composed resources** | Use `request.GetObservedComposedResources(req)` to make decisions based on current cluster state |
-| **`crossplane beta render`** | Run your entire Composition pipeline locally without a cluster for rapid iteration |
-| **Push to a real registry** | Replace `minikube image load` with `docker push`; update `spec.package` to the registry URL |
+| **HTTP calls from functions** | See [Chapter 11](11-functions-with-http.md) — calling an internal service from `RunFunction` with unit tests via `httptest` |
+| **AWS provider functions** | The same `RunFunction` pattern works with `provider-aws` resources — build a `Bucket` struct, convert to unstructured, add to desired |
+| **Push to a real registry** | Replace `ttl.sh` with ECR or GCR; update `spec.package` to the registry URL |
 | **Multi-step pipelines** | Add `function-auto-ready` as a second step to automate readiness detection |
-| **Kustomize** | Learn standalone; use it to manage your XR claim YAML across dev/staging/production |
 
 ---
 
-⬅️ [Back to README](../README.md)
+➡️ [Chapter 11 — Functions with HTTP](11-functions-with-http.md) | ⬅️ [Back to README](../README.md)
