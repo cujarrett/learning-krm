@@ -1,10 +1,12 @@
 # Learning Crossplane
 
+![logo](./logo.png)
+
 A hands-on learning path for building Crossplane custom APIs from scratch — using **minikube on macOS**, **no cloud provider required**, and **Go templating** to generate Kubernetes resources.
 
 All work is local: write YAML and Go templates, apply them to minikube, test, iterate.
 
-No CI/CD, no cloud. Crossplane runs as pods inside minikube and creates standard Kubernetes resources (Deployments, Services, ConfigMaps). By Chapter 09 you will write your own Composition Function in Go — a real gRPC service that Crossplane calls to render resources.
+No CI/CD, no cloud. Crossplane runs as pods inside minikube and creates standard Kubernetes resources (Deployments, Services, ConfigMaps). By Chapter 09 you will write your own Composition Function in Go.
 
 ---
 
@@ -22,8 +24,7 @@ No CI/CD, no cloud. Crossplane runs as pods inside minikube and creates standard
 | [08 - Namespace Isolation & RBAC](chapters/08-claims-and-rbac.md) | Namespaced XRs, Roles, RoleBindings, `kubectl auth can-i` | ~30 min |
 | [09 - Advanced Go Templating](chapters/09-advanced-go-templating.md) | HPA conditionals, nil-safe patterns, loops, MicroService XRD | ~60 min |
 | [10 - Write a Composition Function in Go](chapters/10-write-function-in-go.md) | Custom Go function, RunFunction handler, local image load | ~90 min |
-
-> **This guide targets Crossplane v2.** If you have used Crossplane before, note that v2 removes the Claim/XR split that existed in v1 — there is no longer a separate cluster-scoped XR object created behind the scenes. A namespaced XR (what you apply to the cluster) is the only object. You do not need to think about Claims as a distinct concept.
+| [11 - Functions with HTTP](chapters/11-functions-with-http.md) | Outbound HTTP calls from RunFunction, graceful degradation, httptest unit tests | ~45 min |
 
 ---
 
@@ -73,38 +74,6 @@ Every chapter follows the same rhythm:
   kubectl get / describe / logs
           │
           └─ tweak and repeat
-```
-
----
-
-## Quick Reference Commands
-
-```bash
-# Cluster lifecycle
-minikube start --profile crossplane
-minikube stop  --profile crossplane
-minikube delete --profile crossplane
-
-# Check Crossplane is healthy
-kubectl get pods -n crossplane-system
-
-# What XRDs (custom APIs) are installed?
-kubectl get xrds
-
-# What Functions (plugins) are installed?
-kubectl get functions.pkg.crossplane.io
-
-# List all composite resources (XRs) in the cluster
-kubectl get composite
-
-# Watch resources reconcile in real time
-kubectl get deployments --watch
-
-# Debug a specific XR
-kubectl describe webservice my-webservice -n default
-
-# See events sorted by time (great for debugging)
-kubectl get events --sort-by=.metadata.creationTimestamp
 ```
 
 ---
