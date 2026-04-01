@@ -562,4 +562,4 @@ The iteration loop from here is: edit `fn.go` → `docker build -t function-app-
 
 ---
 
-➡️ [Chapter 11 — Functions with HTTP](11-functions-with-http.md) | ⬅️ [Back to README](../README.md)
+➡️ [Chapter 11 — Functions with HTTP](11-functions-with-http.md) | ⬅️ [Back to README](../../README.md)
