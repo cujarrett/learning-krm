@@ -173,7 +173,7 @@ This tells Kubernetes: "An `App` object must have a `spec.image` field of type s
 
 ---
 
-### Step 2 — Developer provides the value in their Claim/XR
+### Step 2 — Developer provides the value in their XR
 
 In [app.yaml](../app.yaml), the developer writes:
 

@@ -28,8 +28,8 @@ Crossplane has three core building blocks:
                                             │                              │
   DEVELOPER                                 ▼                              ▼
                                      ┌──────┴──────────────────────────────┴──────┐
-  # Claim — namespaced YAML          │  XR (Composite Resource)                   │
-  # that the developer writes        │  Cluster-scoped live object                │
+  # XR — namespaced YAML             │  XR (Composite Resource)                   │
+  # that the developer writes        │  Namespaced live object                    │
   # and commits to Git.    ────────► │  Holds inputs & outputs                    │
   apiVersion: example.io/v1alpha1    └──────────────────────┬─────────────────────┘
   kind: WebService                                          │
@@ -82,7 +82,6 @@ That is it. No CI/CD, no cloud, no GitOps tooling. When you understand Crossplan
 | **XR** (Composite Resource) | An instance — what the developer applies | An instantiated object |
 | **Function** | A plugin that runs inside the Composition pipeline | Middleware / transformer |
 | **Provider** | Installs managed resource types for AWS/GCP/K8s/etc. | An SDK for a cloud API |
-| **Claim** | Namespaced XR (Crossplane v2 uses `scope: Namespaced` directly) | A namespace-scoped resource instance |
 
 In this guide: no Provider, no cloud. All Compositions produce Kubernetes-native resources (Deployments, Services, ConfigMaps).
 

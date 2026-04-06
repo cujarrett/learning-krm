@@ -2,7 +2,7 @@
 
 > **You will build:** A `WebService` XRD with schema validation, defaults, enum constraints, and status fields.
 
-A **CompositeResourceDefinition (XRD)** is how you create your own Kubernetes custom resource type. When platform teams say "we have a `MicroService` API" or "developers create a `WebService` claim in Backstage", they are describing a type that was defined in an XRD.
+A **CompositeResourceDefinition (XRD)** is how you create your own Kubernetes custom resource type. When platform teams say "we have a `MicroService` API" or "developers create a `WebService` XR in Backstage", they are describing a type that was defined in an XRD.
 
 When Crossplane processes your XRD it does two things:
 1. Creates a **CRD** in the cluster so `kubectl` accepts your new Kind

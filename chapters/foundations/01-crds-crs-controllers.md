@@ -101,7 +101,7 @@ Step 3 is the crux: the controller is always computing **desired state minus cur
 
 ## What Crossplane Actually Is
 
-Crossplane is a **controller framework**. It ships a set of controllers that watch its own CRDs (XRDs, Compositions, Claims) and reconcile them. When you write an XRD, Crossplane's controller creates a new CRD for you. When someone submits a CR of that type, Crossplane's composition engine runs the Function pipeline and reconciles the downstream resources.
+Crossplane is a **controller framework**. It ships a set of controllers that watch its own CRDs (XRDs, Compositions, XRs) and reconcile them. When you write an XRD, Crossplane's controller creates a new CRD for you. When someone submits a CR of that type, Crossplane's composition engine runs the Function pipeline and reconciles the downstream resources.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -135,7 +135,7 @@ When a system says it "uses controllers," it means it ships its own CRDs and con
 | cert-manager | `Certificate`, `Issuer`, `ClusterIssuer` | Requests TLS certs from ACME/Vault, writes them as Secrets |
 | Argo CD | `Application`, `AppProject` | Syncs Git repo contents to the cluster |
 | Flux | `GitRepository`, `Kustomization`, `HelmRelease` | Pulls from Git/Helm and applies to cluster |
-| Crossplane | `XRD`, `Composition`, `Claim` | Creates CRDs, runs Function pipelines, reconciles managed resources |
+| Crossplane | `XRD`, `Composition`, `XR` | Creates CRDs, runs Function pipelines, reconciles managed resources |
 | kro | `ResourceGraphDefinition` | Parses CEL expressions, infers dependency graph, generates CRD, reconciles instances |
 | AWS Controllers for K8s (ACK) | `Bucket`, `Queue`, `RDSInstance` | Calls AWS APIs to provision cloud resources |
 | Your custom operator | Whatever you define | Whatever you implement |
@@ -275,7 +275,7 @@ status:
 Apply the XRD from Crossplane Chapter 03 if it is not already in your cluster, then inspect what Crossplane generated:
 
 ```bash
-# See all CRDs — Crossplane creates one for XR and one for the Claim
+# See all CRDs — Crossplane creates one CRD per XRD
 kubectl get crds | grep example.crossplane.io
 
 # Describe the generated CRD to see the schema Crossplane derived from your XRD
